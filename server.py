@@ -11,7 +11,13 @@ TCP_PORT = 5005
 BUFFER_SIZE = 1024  # Normally 1024, but we want fast response
 GROUPS = {}
 USERS = {}
-USER_READY_STR = 'A new user has now been created. Your user id is: '
+USER_READY_STR = 'Your user id is '
+CMDERROR = 'Please enter a valid command.'
+LMINPUTERROR = 'Usage is: !lm <group_name>'
+JINPUTERROR = 'Usage is: !j <group_name>'
+EINPUTERROR = 'Usage is: !e <group_name>'
+NOGROUPERROR = 'The group you have specified does not exist.'
+ENOUSERERROR = 'You are not member of the specified group.'
 usrid = 0
 register = {}
 
@@ -27,7 +33,6 @@ message_queue = {}
 
 while inputs:
 	readable, writeable, exceptional = select.select(inputs, outputs, inputs)
-	print 'Sanity'
 	for r in readable:
 		if r is s:
 			conn, addr = r.accept()
@@ -39,44 +44,75 @@ while inputs:
 		else:
 			data = r.recv(BUFFER_SIZE)
 			if data:
-				if (register[r] == True):
+				if (register[r] == True and not data.startswith("ID: ")):
 					register[r] == False
 					ip = data.split(' ')[0]
 					udp_port = data.split(' ')[1]
 					username = data.split(' ')[2]
-					USERS[usrid] = []
-					USERS[usrid].append(ip)
-					USERS[usrid].append(udp_port)
-					USERS[usrid].append(username)
-					message_queue[r].put(USER_READY_STR + str(usrid))
+					tempid = str(usrid)
+					USERS[tempid] = []
+					USERS[tempid].append(ip)
+					USERS[tempid].append(udp_port)
+					USERS[tempid].append(username)
+					for value in USERS[tempid]:
+						print value
+					message_queue[r].put(USER_READY_STR + tempid)
 					usrid += 1
-				elif (data == '!lg'):
+				elif (data.split(' ')[2] == '!lg'):
 					grps = ''
 					for key in GROUPS:
 						grps += key + ' '
 					message_queue[r].put(grps)
 				
-				elif (data.startswith('!lm ')):
-					grp = data.split(' ')[1]
-					mbrs = ''
-					try:
-						for members in GROUPS[grp]:
-							mbrs += members + ' '
-					except:
-						mbrs = 'There is no such group.'
-					message_queue[r].put(mbrs)
-				elif (data.startswith('!j ')):
-					grp = data.split(' ')[1]
-					mbrs = ''
-					try:
+				elif (data.split(' ')[2] == '!lm'):
+					input_length = len(data.split(' '))
+					if (input_length == 4):
+						grp = data.split(' ')[3]
+						mbrs = ''
+						try:
+							for members in GROUPS[grp]:
+								mbrs += members + ' '
+						except:
+							mbrs = NOGROUPERROR
+						message_queue[r].put(mbrs)
+					else:
+						message_queue[r].put(LMINPUTERROR)	
+				elif (data.split(' ')[2] == '!j'):
+					input_length = len(data.split(' '))
+					if (input_length == 4):
+						tempid = data.split(' ')[1]
+						grp = data.split(' ')[3]
 						if not grp in GROUPS:
 							GROUPS[grp] = []
-							GROUPS[grp].append()
-					except:
-						mbrs = 'There is no such group.'
-					message_queue[r].put(mbrs)
+							GROUPS[grp] = [tempid]
+						else:
+							GROUPS[grp].append(str(tempid))	
+						message_queue[r].put("You have been connected to the group " + grp)
+					else:
+						message_queue[r].put(JINPUTERROR)	
+				elif (data.split(' ')[2] == '!e'):
+					input_length = len(data.split(' '))
+					if (input_length == 4):
+						tempid = data.split(' ')[1]
+						grp = data.split(' ')[3]
+						if not grp in GROUPS:
+							message_queue[r].put(NOGROUPERROR)
+						else:
+							flag = False
+							for a in GROUPS.itervalues():
+								try:
+									a.remove(tempid)
+									flag = True
+								except ValueError:
+									pass
+							if (flag):			
+								message_queue[r].put("You have been disconnected from the group " + grp)
+							else:
+								message_queue[r].put(ENOUSERERROR)	
+					else:
+						message_queue[r].put(EINPUTERROR)
 				else:
-					message_queue[r].put(data)
+					message_queue[r].put(CMDERROR)
 				print "received data:", data
 				if r not in outputs:
 					outputs.append(r)
@@ -94,7 +130,11 @@ while inputs:
 			outputs.remove(w)
 		else:
 			w.send(msg)
-
+			inputs.remove(w)
+			if w in outputs:
+				outputs.remove(w)
+			w.close()
+			del message_queue[w]
 	for e in exceptional:
 		inputs.remove(e)
 		if e in outputs:

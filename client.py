@@ -13,11 +13,20 @@ print "Please provide your IP address, your preffered UDP port and username divi
 MESSAGE = raw_input()
 s.send(MESSAGE)
 data = s.recv(BUFFER_SIZE)
+usrid = str(data.split(' ')[4])
 print "received data:", data
+s.close()
 while 1:
 	MESSAGE = raw_input()
-	s.send(MESSAGE)
-	data = s.recv(BUFFER_SIZE)
-	print "received data:", data
-s.close()
-
+	if (MESSAGE.startswith('!')):
+		try:
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			s.connect((TCP_IP, TCP_PORT))
+		except:
+			print "You are already connected with id: ", usrid	
+		MESSAGE = "ID: " + usrid + " " + MESSAGE	
+		s.send(MESSAGE)
+		data = s.recv(BUFFER_SIZE)
+		print "received data:", data
+	else:
+		print "Enter a valid command."
