@@ -19,7 +19,6 @@ EINPUTERROR = 'Usage is: !e <group_name>'
 NOGROUPERROR = 'The group you have specified does not exist.'
 ENOUSERERROR = 'You are not member of the specified group.'
 usrid = 0
-register = {}
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setblocking(0)
@@ -40,12 +39,10 @@ while inputs:
 			inputs.append(conn)
 			print 'Connection address:', addr
 			message_queue[conn] = Queue.Queue()
-			register[conn] = True
 		else:
 			data = r.recv(BUFFER_SIZE)
 			if data:
-				if (register[r] == True and not data.startswith("ID: ")):
-					register[r] == False
+				if (not data.startswith("ID: ")):
 					ip = data.split(' ')[0]
 					udp_port = data.split(' ')[1]
 					username = data.split(' ')[2]
@@ -84,9 +81,9 @@ while inputs:
 						grp = data.split(' ')[3]
 						if not grp in GROUPS:
 							GROUPS[grp] = []
-							GROUPS[grp] = [tempid]
+							GROUPS[grp] = [USERS[tempid][2]]
 						else:
-							GROUPS[grp].append(str(tempid))	
+							GROUPS[grp].append(USERS[tempid][2])	
 						message_queue[r].put("You have been connected to the group " + grp)
 					else:
 						message_queue[r].put(JINPUTERROR)	
@@ -101,7 +98,7 @@ while inputs:
 							flag = False
 							for a in GROUPS.itervalues():
 								try:
-									a.remove(tempid)
+									a.remove(USERS[tempid][2])
 									flag = True
 								except ValueError:
 									pass
