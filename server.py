@@ -10,14 +10,16 @@ TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
 BUFFER_SIZE = 1024  # Normally 1024, but we want fast response
 GROUPS = {}
+GROUPS_IDS = {}
 USERS = {}
 USER_READY_STR = 'Your user id is '
 CMDERROR = 'Please enter a valid command.'
 LMINPUTERROR = 'Usage is: !lm <group_name>'
 JINPUTERROR = 'Usage is: !j <group_name>'
 EINPUTERROR = 'Usage is: !e <group_name>'
+WINPUTERROR = 'Usage is: !w <group_name>'
 NOGROUPERROR = 'The group you have specified does not exist.'
-ENOUSERERROR = 'You are not member of the specified group.'
+NOUSERERROR = 'You are not member of the specified group.'
 usrid = 0
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,11 +84,30 @@ while inputs:
 						if not grp in GROUPS:
 							GROUPS[grp] = []
 							GROUPS[grp] = [USERS[tempid][2]]
+							GROUPS_IDS[grp]= [tempid]
 						else:
-							GROUPS[grp].append(USERS[tempid][2])	
+							GROUPS[grp].append(USERS[tempid][2])
+							GROUPS_IDS[grp].append(tempid)	
 						message_queue[r].put("You have been connected to the group " + grp)
 					else:
-						message_queue[r].put(JINPUTERROR)	
+						message_queue[r].put(JINPUTERROR)
+				elif (data.split(' ')[2] == '!w'):
+					input_length = len(data.split(' '))
+					if (input_length == 4):
+						tempid = data.split(' ')[1]
+						grp = data.split(' ')[3]
+						if not grp in GROUPS:
+							message_queue[r].put(NOGROUPERROR)
+						elif not tempid in GROUPS_IDS[grp]:
+							message_queue[r].put(NOUSERERROR)
+						else:
+							ips_ports  =  'answer:'
+							for temp_i in GROUPS_IDS[grp]:
+								ips_ports += USERS[temp_i][0] +  ' ' + USERS[temp_i][1] + '\n'
+							message_queue[r].put(ips_ports)
+					else:
+						message_queue[r].put(WINPUTERROR)	
+					
 				elif (data.split(' ')[2] == '!e'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):
@@ -102,10 +123,16 @@ while inputs:
 									flag = True
 								except ValueError:
 									pass
+							for a in GROUPS_IDS.itervalues():
+								try:
+									a.remove(tempid)
+								except ValueError:
+									pass
+							
 							if (flag):			
 								message_queue[r].put("You have been disconnected from the group " + grp)
 							else:
-								message_queue[r].put(ENOUSERERROR)	
+								message_queue[r].put(NOUSERERROR)	
 					else:
 						message_queue[r].put(EINPUTERROR)
 				else:
