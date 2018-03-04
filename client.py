@@ -27,6 +27,8 @@ while 1:
 			print "You are already connected with id: ", usrid		
 		MESSAGE = "ID: " + usrid + " " + MESSAGE	
 		s.send(MESSAGE)
+		if (MESSAGE.split(' ')[2] == '!q'):
+			break
 		data = s.recv(BUFFER_SIZE)
 		if (MESSAGE.split(' ')[2] == '!w' and len(data.split(':')) == 2):
 			data = data.split(':')[1]
