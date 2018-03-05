@@ -4,11 +4,13 @@ import socket
 import select
 import sys
 import Queue
+import threading
+import os
 
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
-BUFFER_SIZE = 1024  # Normally 1024, but we want fast response
+BUFFER_SIZE = 1024
 GROUPS = {}
 GROUPS_IDS = {}
 USERS = {}
@@ -21,6 +23,30 @@ WINPUTERROR = 'Usage is: !w <group_name>'
 NOGROUPERROR = 'The group you have specified does not exist.'
 NOUSERERROR = 'You are not member of the specified group.'
 usrid = 0
+
+
+def ping_clients():
+	threading.Timer(10.0, ping_clients).start()
+	for user in USERS:
+		hostname = USERS[user][0]
+		response = os.system("ping -c 1 " + hostname)
+		if response == 0:
+			print hostname, 'is up!'
+		else:
+			print hostname, 'is down!'
+			for a in GROUPS.itervalues():
+				try:
+					a.remove(USERS[user][2])
+				except ValueError:
+					pass
+			for a in GROUPS_IDS.itervalues():
+				try:
+					a.remove(user)
+				except ValueError:
+					pass
+
+ping_clients()
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setblocking(0)
@@ -89,6 +115,8 @@ while inputs:
 							GROUPS[grp].append(USERS[tempid][2])
 							GROUPS_IDS[grp].append(tempid)	
 						message_queue[r].put("You have been connected to the group " + grp)
+					else:
+						message_queue[r].put(JINPUTERROR)
 				elif (data.split(' ')[2] == '!q'):
 					tempid = data.split(' ')[1]
 					for a in GROUPS.itervalues():
@@ -101,9 +129,6 @@ while inputs:
 							a.remove(tempid)
 						except ValueError:
 							pass
-
-					else:
-						message_queue[r].put(JINPUTERROR)
 				elif (data.split(' ')[2] == '!w'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):
@@ -120,7 +145,6 @@ while inputs:
 							message_queue[r].put(ips_ports)
 					else:
 						message_queue[r].put(WINPUTERROR)	
-					
 				elif (data.split(' ')[2] == '!e'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):
