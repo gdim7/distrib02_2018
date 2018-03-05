@@ -58,19 +58,19 @@ while inputs:
 					message_queue[r].put(USER_READY_STR + tempid)
 					usrid += 1
 				elif (data.split(' ')[2] == '!lg'):
-					grps = ''
+					grps = 'groups: '
 					for key in GROUPS:
-						grps += key + ' '
+						grps += '[' + key + '] '
 					message_queue[r].put(grps)
 				
 				elif (data.split(' ')[2] == '!lm'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):
 						grp = data.split(' ')[3]
-						mbrs = ''
+						mbrs = 'members: '
 						try:
 							for members in GROUPS[grp]:
-								mbrs += members + ' '
+								mbrs += '(' + members + ') '
 						except:
 							mbrs = NOGROUPERROR
 						message_queue[r].put(mbrs)
