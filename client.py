@@ -4,19 +4,12 @@ import socket
 import select
 import sys
 import time
-
-
-TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
-BUFFER_SIZE = 1024
-MESSAGE = ""
-group_users = []
-grp = None
+from chat_utils import *
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
 
-print "Please provide your IP address, your preffered UDP port and username divided by a space"
+print 'Please provide your IP address, your preffered UDP port and username divided by a space'
 MESSAGE = raw_input()
 while (not len(MESSAGE.split(' ')) == 3):
 	print 'Usage is: <IP_ADDR> <PORT> <USERNAME>'
@@ -46,9 +39,19 @@ while 1:
 	for socks in read_sockets:
 		if socks == udp_sock:
 			MESSAGE, server = udp_sock.recvfrom(BUFFER_SIZE)
-			sys.stdout.write('\r')
-			sys.stdout.flush()
-			print (MESSAGE)
+			if MESSAGE.startswith('NEW_USER'):
+				new_ip = MESSAGE.split(' ')[1]
+				new_port = int(MESSAGE.split(' ')[2])
+				updated_grp = MESSAGE.split(' ')[7]
+				if current_grp == updated_grp:
+					group_users.append((new_ip, new_port))
+				sys.stdout.write('\r')
+				sys.stdout.flush()
+				print MESSAGE.split(':')[1]
+			else:	
+				sys.stdout.write('\r')
+				sys.stdout.flush()
+				print MESSAGE
 		else:
 			MESSAGE = raw_input()
 			if (MESSAGE.startswith('!')):
@@ -56,40 +59,31 @@ while 1:
 					s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					s.connect((TCP_IP, TCP_PORT))
 				except:
-					print "You are already connected with id: ", usrid
-				MESSAGE = "ID: " + usrid + " " + MESSAGE	
+					print 'You are already connected with id: ', usrid
+				MESSAGE = 'ID: ' + usrid + ' ' + MESSAGE	
 				s.send(MESSAGE)
 				if (MESSAGE.split(' ')[2] == '!q'):
 					print 'Disconnecting...'
 					sys.exit()
-				if (MESSAGE.startswith('!e') and grp == MESSAGE.split(' ')[3]):
-					grp = None
+				if (MESSAGE.split(' ')[2] == '!e' and current_grp == MESSAGE.split(' ')[3]):
+					current_grp = None
 				data = s.recv(BUFFER_SIZE)
 				if (MESSAGE.split(' ')[2] == '!w' and len(data.split(':')) == 2):
-					grp = MESSAGE.split(' ')[3]
-				else:
-					print '[TRACKER]: ', data
-			else:
-
-				if (not grp == None):
-					try:
-						s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-						s.connect((TCP_IP, TCP_PORT))
-					except:
-						print 'You are already connected with id: ', usrid	
-					msg = 'ID: ' + usrid + ' ' + '!w ' + grp	
-					s.send(msg)
-					data = s.recv(1024)
+					current_grp = MESSAGE.split(' ')[3]
 					data = data.split(':')[1]
 					users_info  = data.splitlines()
 					group_users = []
 					for strng in users_info:
 						ip_port = strng.split(' ')
 						group_users.append((ip_port[0], ip_port[1]))
+				else:
+					print '[TRACKER]: ', data
+			else:
+				if (not current_grp == None):
 					for user in group_users:
 						udp_addr = (user[0], int(user[1]))
 						send_msg = ''
-						send_msg = 'In ' + grp + ' ' + USERNAME + ' says:: ' + MESSAGE 
+						send_msg = 'In ' + current_grp + ' ' + USERNAME + ' says:: ' + MESSAGE 
 						sent = udp_sock.sendto(send_msg, udp_addr)
 				else:
 					print 'Please join a group in order to send messages.'

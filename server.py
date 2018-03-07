@@ -4,46 +4,7 @@ import socket
 import select
 import sys
 import Queue
-import threading
-import os
-
-
-TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
-BUFFER_SIZE = 1024
-GROUPS = {}
-GROUPS_IDS = {}
-USERS = {}
-USER_READY_STR = 'Your user id is '
-CMDERROR = 'Please enter a valid command.'
-LMINPUTERROR = 'Usage is: !lm <group_name>'
-JINPUTERROR = 'Usage is: !j <group_name>'
-EINPUTERROR = 'Usage is: !e <group_name>'
-WINPUTERROR = 'Usage is: !w <group_name>'
-NOGROUPERROR = 'The group you have specified does not exist.'
-NOUSERERROR = 'You are not member of the specified group.'
-usrid = 0
-
-
-def ping_clients():
-	threading.Timer(10.0, ping_clients).start()
-	for user in USERS:
-		hostname = USERS[user][0]
-		response = os.system("ping -c 1 " + hostname)
-		if response == 0:
-			print hostname, 'is up!'
-		else:
-			print hostname, 'is down!'
-			for a in GROUPS.itervalues():
-				try:
-					a.remove(USERS[user][2])
-				except ValueError:
-					pass
-			for a in GROUPS_IDS.itervalues():
-				try:
-					a.remove(user)
-				except ValueError:
-					pass
+from chat_utils import *
 
 ping_clients()
 
@@ -70,7 +31,7 @@ while inputs:
 		else:
 			data = r.recv(BUFFER_SIZE)
 			if data:
-				if (not data.startswith("ID: ")):
+				if (not data.startswith('ID: ')):
 					ip = data.split(' ')[0]
 					udp_port = data.split(' ')[1]
 					username = data.split(' ')[2]
@@ -111,10 +72,23 @@ while inputs:
 							GROUPS[grp] = []
 							GROUPS[grp] = [USERS[tempid][2]]
 							GROUPS_IDS[grp]= [tempid]
+							message_queue[r].put('You have been connected to the group ' + grp)
 						else:
-							GROUPS[grp].append(USERS[tempid][2])
-							GROUPS_IDS[grp].append(tempid)	
-						message_queue[r].put("You have been connected to the group " + grp)
+							if not tempid in GROUPS_IDS[grp]:
+								GROUPS[grp].append(USERS[tempid][2])
+								GROUPS_IDS[grp].append(tempid)	
+								new_udp_ip = USERS[tempid][0]
+								new_udp_port = USERS[tempid][1]
+								new_username = USERS[tempid][2]
+								update_msg =  'NEW_USER ' + new_udp_ip + ' ' + new_udp_port + ' :' + new_username + ' has now joined ' + grp
+								udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+								for user in GROUPS_IDS[grp]:
+									if not user == tempid:
+										udp_addr = (USERS[user][0], int(USERS[user][1]))
+										sent = udp_socket.sendto(update_msg, udp_addr)
+								message_queue[r].put('You have been connected to the group ' + grp)
+							else:
+								message_queue[r].put(JMEMBERERROR)
 					else:
 						message_queue[r].put(JINPUTERROR)
 				elif (data.split(' ')[2] == '!q'):
@@ -167,14 +141,14 @@ while inputs:
 									pass
 							
 							if (flag):			
-								message_queue[r].put("You have been disconnected from the group " + grp)
+								message_queue[r].put('You have been disconnected from the group ' + grp)
 							else:
 								message_queue[r].put(NOUSERERROR)	
 					else:
 						message_queue[r].put(EINPUTERROR)
 				else:
 					message_queue[r].put(CMDERROR)
-				print "received data:", data
+				print 'received data:', data
 				if r not in outputs:
 					outputs.append(r)
 			else:
