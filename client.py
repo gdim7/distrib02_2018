@@ -20,6 +20,9 @@ usrid = str(data.split(' ')[4])
 print '[TRACKER]: ', data
 s.close()
 
+timestamps = {}
+stored_msgs = {}
+
 UDP_IP = MESSAGE.split(' ')[0]
 UDP_PORT = int(MESSAGE.split(' ')[1])
 USERNAME = MESSAGE.split(' ')[2]
@@ -39,10 +42,19 @@ while 1:
 	for socks in read_sockets:
 		if socks == udp_sock:
 			MESSAGE, server = udp_sock.recvfrom(BUFFER_SIZE)
-			if MESSAGE.startswith('NEW_USER'):
+			if MESSAGE.startswith('REMOVE_USER'):
+				removed_ip = MESSAGE.split(' ')[1]
+				removed_port = MESSAGE.split(' ')[2]
+				for a in group_users:
+					if a == (removed_ip, removed_port):
+						group_users.remove((removed_ip, removed_port))
+				sys.stdout.write('\r')
+				sys.stdout.flush()
+			elif MESSAGE.startswith('NEW_USER'):
 				new_ip = MESSAGE.split(' ')[1]
-				new_port = int(MESSAGE.split(' ')[2])
-				updated_grp = MESSAGE.split(' ')[7]
+				new_port = MESSAGE.split(' ')[2]
+				new_id = MESSAGE.split(' ')[3]
+				updated_grp = MESSAGE.split(' ')[8]
 				if current_grp == updated_grp:
 					group_users.append((new_ip, new_port))
 				sys.stdout.write('\r')

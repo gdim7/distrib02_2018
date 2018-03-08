@@ -6,7 +6,7 @@ import sys
 import Queue
 from chat_utils import *
 
-ping_clients()
+#ping_clients()
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,6 +68,8 @@ while inputs:
 					if (input_length == 4):
 						tempid = data.split(' ')[1]
 						grp = data.split(' ')[3]
+						if not tempid in USERS:
+							USERS
 						if not grp in GROUPS:
 							GROUPS[grp] = []
 							GROUPS[grp] = [USERS[tempid][2]]
@@ -80,7 +82,7 @@ while inputs:
 								new_udp_ip = USERS[tempid][0]
 								new_udp_port = USERS[tempid][1]
 								new_username = USERS[tempid][2]
-								update_msg =  'NEW_USER ' + new_udp_ip + ' ' + new_udp_port + ' :' + new_username + ' has now joined ' + grp
+								update_msg =  'NEW_USER ' + new_udp_ip + ' ' + new_udp_port + ' ' + tempid + ' :' + new_username + ' has now joined ' + grp
 								udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 								for user in GROUPS_IDS[grp]:
 									if not user == tempid:
@@ -103,6 +105,14 @@ while inputs:
 							a.remove(tempid)
 						except ValueError:
 							pass
+					remove_ip = USERS[tempid][0]
+					remove_port = USERS[tempid][1]
+					remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port
+					udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+					for user in USERS:
+						#if not user == tempid:
+						udp_addr = (USERS[user][0], int(USERS[user][1]))
+						sent = udp_socket.sendto(remove_msg, udp_addr)
 				elif (data.split(' ')[2] == '!w'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):
@@ -142,6 +152,14 @@ while inputs:
 							
 							if (flag):			
 								message_queue[r].put('You have been disconnected from the group ' + grp)
+								remove_ip = USERS[tempid][0]
+								remove_port = USERS[tempid][1]
+								remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port
+								udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+								for user in GROUPS_IDS[grp]:
+									#if not user == tempid:
+									udp_addr = (USERS[user][0], int(USERS[user][1]))
+									sent = udp_socket.sendto(remove_msg, udp_addr)
 							else:
 								message_queue[r].put(NOUSERERROR)	
 					else:
