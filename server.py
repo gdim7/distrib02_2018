@@ -17,8 +17,6 @@ s.listen(1)
 inputs = [s]
 outputs = []
 
-message_queue = {}
-
 while inputs:
 	readable, writeable, exceptional = select.select(inputs, outputs, inputs)
 	for r in readable:
@@ -40,8 +38,6 @@ while inputs:
 					USERS[tempid].append(ip)
 					USERS[tempid].append(udp_port)
 					USERS[tempid].append(username)
-					for value in USERS[tempid]:
-						print value
 					message_queue[r].put(USER_READY_STR + tempid)
 					usrid += 1
 				elif (data.split(' ')[2] == '!lg'):
@@ -68,8 +64,6 @@ while inputs:
 					if (input_length == 4):
 						tempid = data.split(' ')[1]
 						grp = data.split(' ')[3]
-						if not tempid in USERS:
-							USERS
 						if not grp in GROUPS:
 							GROUPS[grp] = []
 							GROUPS[grp] = [USERS[tempid][2]]
@@ -88,6 +82,8 @@ while inputs:
 									if not user == tempid:
 										udp_addr = (USERS[user][0], int(USERS[user][1]))
 										sent = udp_socket.sendto(update_msg, udp_addr)
+										new_timestamp_msg = 'TIMESTAMP ' + str(tempid) + ' ' + new_udp_ip + ' ' + new_udp_port + ' ' + grp
+										sent = udp_socket.sendto(new_timestamp_msg, udp_addr)		
 								message_queue[r].put('You have been connected to the group ' + grp)
 							else:
 								message_queue[r].put(JMEMBERERROR)
@@ -107,10 +103,9 @@ while inputs:
 							pass
 					remove_ip = USERS[tempid][0]
 					remove_port = USERS[tempid][1]
-					remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port
+					remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port + ' ' + tempid
 					udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 					for user in USERS:
-						#if not user == tempid:
 						udp_addr = (USERS[user][0], int(USERS[user][1]))
 						sent = udp_socket.sendto(remove_msg, udp_addr)
 				elif (data.split(' ')[2] == '!w'):
@@ -154,10 +149,9 @@ while inputs:
 								message_queue[r].put('You have been disconnected from the group ' + grp)
 								remove_ip = USERS[tempid][0]
 								remove_port = USERS[tempid][1]
-								remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port
+								remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port + ' ' + tempid
 								udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 								for user in GROUPS_IDS[grp]:
-									#if not user == tempid:
 									udp_addr = (USERS[user][0], int(USERS[user][1]))
 									sent = udp_socket.sendto(remove_msg, udp_addr)
 							else:
@@ -179,8 +173,9 @@ while inputs:
 	for w in writeable:
 		try:
 			msg = message_queue[w].get_nowait()
-		except Queue.Empty:
-			outputs.remove(w)
+		except:
+			if w in outputs:
+				outputs.remove(w)
 		else:
 			w.send(msg)
 			inputs.remove(w)
@@ -188,6 +183,7 @@ while inputs:
 				outputs.remove(w)
 			w.close()
 			del message_queue[w]
+
 	for e in exceptional:
 		inputs.remove(e)
 		if e in outputs:

@@ -22,6 +22,7 @@ usrid = 0
 MESSAGE = ''
 group_users = []
 current_grp = None
+message_queue = {}
 
 
 def ping_clients():
