@@ -115,7 +115,11 @@ while 1:
 			elif MESSAGE.startswith('TIMESTAMP'):
 				new_id = MESSAGE.split(' ')[1]
 				new_grp = MESSAGE.split(' ')[4]
+				#if new_grp in grp_timestamps:
 				grp_timestamps[new_grp][new_id] = 0
+				#else:
+				#	grp_timestamps[new_grp] = {}
+				#	grp_timestamps[new_grp][new_id] = 0
 				udp_addr = (MESSAGE.split(' ')[2], int(MESSAGE.split(' ')[3]))
 				tmstmp_msg = 'MY_TIMESTAMP ' + usrid + ' ' + str(grp_timestamps[new_grp][usrid]) + ' ' + new_grp
 				sent = udp_sock.sendto(tmstmp_msg, udp_addr)
@@ -148,9 +152,10 @@ while 1:
 					sys.exit()
 				if (MESSAGE.split(' ')[2] == '!j'):
 					grp = MESSAGE.split(' ')[3]
-					grp_timestamps[grp] = {}
-					grp_timestamps[grp][usrid] = 0
-					grp_stored_msgs[grp] = {}
+					if not grp in grp_timestamps:
+						grp_timestamps[grp] = {}
+						grp_timestamps[grp][usrid] = 0
+						grp_stored_msgs[grp] = {}
 				if (MESSAGE.split(' ')[2] == '!e' and current_grp == MESSAGE.split(' ')[3]):
 					current_grp = None
 				data = s.recv(BUFFER_SIZE)	
