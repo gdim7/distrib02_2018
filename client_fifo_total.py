@@ -6,6 +6,18 @@ import sys
 import time
 from chat_utils import *
 import Queue
+import signal
+
+def signal_handler(signal, frame):
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((TCP_IP, TCP_PORT))
+	MESSAGE = 'ID: '+ usrid + ' !q'
+	s.send(MESSAGE)
+	print 'Disconnecting...'
+	s.close()
+	sys.exit()
+
+signal.signal(signal.SIGINT, signal_handler)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
@@ -211,7 +223,6 @@ while 1:
 				print MESSAGE.split(':')[1]
 			elif MESSAGE.startswith('CURRENT_SEQ_NUMBER'):
 				seq_number[MESSAGE.split(' ')[2]] = int(MESSAGE.split(' ')[1])
-				print MESSAGE
 				sys.stdout.write('\r')
 				sys.stdout.flush()
 			elif MESSAGE.startswith('PRINT_MSG'):
