@@ -92,10 +92,12 @@ while inputs:
 				elif (data.split(' ')[2] == '!q'):
 					tempid = data.split(' ')[1]
 					grp_list = []
+					for key in GROUPS:
+						if tempid in GROUPS_IDS[key]:
+							grp_list.append(key)
 					for a in GROUPS.itervalues():
 						try:
 							a.remove(USERS[tempid][2])
-							grp_list.append(a)
 						except ValueError:
 							pass
 					for a in GROUPS_IDS.itervalues():
@@ -103,6 +105,7 @@ while inputs:
 							a.remove(tempid)
 						except ValueError:
 							pass
+					grp_empty = True
 					for grp in grp_list:
 						grp_empty = True
 						for a in GROUPS[grp]:
