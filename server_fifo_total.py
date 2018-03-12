@@ -102,9 +102,11 @@ while inputs:
 						message_queue[r].put(JINPUTERROR)
 				elif (data.split(' ')[2] == '!q'):
 					tempid = data.split(' ')[1]
+					grp_list = []
 					for a in GROUPS.itervalues():
 						try:
 							a.remove(USERS[tempid][2])
+							grp_list.append(a)
 						except ValueError:
 							pass
 					for a in GROUPS_IDS.itervalues():
@@ -119,7 +121,7 @@ while inputs:
 								seq_list.append(a)
 						except ValueError:
 							pass
-					for grp in seq_list:
+					for grp in grp_list:
 						grp_empty = True
 						for a in GROUPS_IDS[grp]:
 									grp_empty = False
@@ -129,31 +131,32 @@ while inputs:
 						if  grp_empty:
 							del GROUPS[grp]
 							del GROUPS_IDS[grp]
-					remove_ip = USERS[tempid][0]
-					remove_port = USERS[tempid][1]
-					remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port + ' ' + tempid
-					udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-					for user in USERS:
-						udp_addr = (USERS[user][0], int(USERS[user][1]))
-						sent = udp_socket.sendto(remove_msg, udp_addr)	
-					for grp in seq_list:
-						flag_seq = True
-						seq_addr = ('','')	
-						if (tempid == sequencers[grp]):
-							for user in GROUPS_IDS[grp]:
-								if flag_seq:
-									udp_addr = (USERS[user][0], int(USERS[user][1]))
-									flag_seq = False
-									sequencers[grp] = user
-									seq_addr = udp_addr
-									seq_msg = 'U_R_SEQUENCER ' + grp
-									sent = udp_socket.sendto(seq_msg, udp_addr)
-									break
-							if not seq_addr == ('',''):
+					if not grp_empty:
+						remove_ip = USERS[tempid][0]
+						remove_port = USERS[tempid][1]
+						remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port + ' ' + tempid
+						udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+						for user in USERS:
+							udp_addr = (USERS[user][0], int(USERS[user][1]))
+							sent = udp_socket.sendto(remove_msg, udp_addr)	
+						for grp in seq_list:
+							flag_seq = True
+							seq_addr = ('','')	
+							if (tempid == sequencers[grp]):
 								for user in GROUPS_IDS[grp]:
-									if not user == sequencers[grp]:
-										seq_msg = 'U_R_SEQUENCER ' + grp + ' ' + USERS[user][0] + ' ' + USERS[user][1] + ' q'
-										sent = udp_socket.sendto(seq_msg, seq_addr) 		
+									if flag_seq:
+										udp_addr = (USERS[user][0], int(USERS[user][1]))
+										flag_seq = False
+										sequencers[grp] = user
+										seq_addr = udp_addr
+										seq_msg = 'U_R_SEQUENCER ' + grp
+										sent = udp_socket.sendto(seq_msg, udp_addr)
+										break
+								if not seq_addr == ('',''):
+									for user in GROUPS_IDS[grp]:
+										if not user == sequencers[grp]:
+											seq_msg = 'U_R_SEQUENCER ' + grp + ' ' + USERS[user][0] + ' ' + USERS[user][1] + ' q'
+											sent = udp_socket.sendto(seq_msg, seq_addr) 		
 				elif (data.split(' ')[2] == '!w'):
 					input_length = len(data.split(' '))
 					if (input_length == 4):

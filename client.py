@@ -159,6 +159,8 @@ while 1:
 				if (MESSAGE.split(' ')[2] == '!e' and current_grp == MESSAGE.split(' ')[3]):
 					current_grp = None
 				data = s.recv(BUFFER_SIZE)	
+				if (MESSAGE.split(' ')[2] == '!e' and data.startswith('You have been disconnected')):
+					del grp_timestamps[MESSAGE.split(' ')[3]]
 				if (MESSAGE.split(' ')[2] == '!w' and len(data.split(':')) == 2):
 					current_grp = MESSAGE.split(' ')[3]
 					data = data.split(':')[1]
