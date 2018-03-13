@@ -6,13 +6,12 @@ import sys
 import Queue
 from chat_utils import *
 
-#ping_clients()
-
-
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setblocking(0)
 s.bind((TCP_IP, TCP_PORT))
 s.listen(1)
+
+ping_clients()
 
 inputs = [s]
 outputs = []

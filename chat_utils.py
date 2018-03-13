@@ -34,7 +34,7 @@ def ping_clients():
 			print hostname, 'is up!'
 		else:
 			print hostname, 'is down!'
-			for a in GROUPS.itervalues():
+			"""for a in GROUPS.itervalues():
 				try:
 					a.remove(USERS[user][2])
 				except ValueError:
@@ -43,4 +43,6 @@ def ping_clients():
 				try:
 					a.remove(user)
 				except ValueError:
-					pass
+					pass"""
+			MESSAGE = 'ID: ' + str(user) + ' !q'
+			s.send(MESSAGE)

@@ -103,8 +103,8 @@ while inputs:
 				elif (data.split(' ')[2] == '!q'):
 					tempid = data.split(' ')[1]
 					grp_list = []
-					for key in GROUPS:
-						if tempid in GROUPS[key]:
+					for key in GROUPS_IDS:
+						if tempid in GROUPS_IDS[key]:
 							grp_list.append(key)
 					for a in GROUPS.itervalues():
 						try:
@@ -129,8 +129,10 @@ while inputs:
 						for a in GROUPS_IDS[grp]:
 									grp_empty = False
 									break
+						i_am_seq = False
 						if tempid in sequencers[grp]:
 							sequencers[grp] = None
+							i_am_seq = True
 						if  grp_empty:
 							del GROUPS[grp]
 							del GROUPS_IDS[grp]
@@ -145,7 +147,7 @@ while inputs:
 						for grp in seq_list:
 							flag_seq = True
 							seq_addr = ('','')	
-							if (tempid == sequencers[grp]):
+							if i_am_seq:
 								for user in GROUPS_IDS[grp]:
 									if flag_seq:
 										udp_addr = (USERS[user][0], int(USERS[user][1]))
@@ -204,8 +206,10 @@ while inputs:
 							for a in GROUPS_IDS[grp]:
 								grp_empty = False
 								break
+							i_am_seq = False
 							if tempid in sequencers[grp]:
 								sequencers[grp] = None
+								i_am_seq = True
 							if grp_empty:	
 								del GROUPS[grp]
 								del GROUPS_IDS[grp]
@@ -215,10 +219,9 @@ while inputs:
 									remove_ip = USERS[tempid][0]
 									remove_port = USERS[tempid][1]
 									remove_msg = 'REMOVE_USER ' + remove_ip + ' ' + remove_port + ' ' + tempid
-									print remove_msg
 									udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 									flag_seq = True
-									if not tempid == sequencers[grp]:
+									if not i_am_seq:
 										flag_seq = False
 									seq_addr = ('','')
 									for user in GROUPS_IDS[grp]:
@@ -232,7 +235,6 @@ while inputs:
 											sent = udp_socket.sendto(seq_msg, udp_addr)
 									if not seq_addr == ('',''):
 										for user in GROUPS_IDS[grp]:
-											print user, sequencers
 											if not user == sequencers[grp]:
 												seq_msg = 'U_R_SEQUENCER ' + grp + ' ' + USERS[user][0] + ' ' + USERS[user][1] + ' q'
 												sent = udp_socket.sendto(seq_msg, seq_addr)

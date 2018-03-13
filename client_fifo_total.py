@@ -183,6 +183,8 @@ while 1:
 					new_addr = (MESSAGE.split(' ')[2], MESSAGE.split(' ')[3])
 					seq_addr[seq_grp].append(new_addr)
 				elif len(MESSAGE.split(' ')) == 5:
+					print 'mphke'
+					print MESSAGE
 					if not grp in seq_addr:
 						seq_addr[grp] = []
 						seq_number[grp] = 0
